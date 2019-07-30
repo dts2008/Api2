@@ -76,7 +76,7 @@ namespace Api2
                 return true;
             }
 
-            item.id = commonItems.Count > 0 ? commonItems.Max(i => i.id) : 1;
+            item.id = commonItems.Count > 0 ? commonItems.Max(i => i.id) + 1 : 1;
             commonItems.Add(item);
 
             id = item.id;
