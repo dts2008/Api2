@@ -12,6 +12,8 @@ namespace Api2
         {
             try
             {
+                if (string.IsNullOrEmpty(data)) return default(T);
+
                 return JsonConvert.DeserializeObject<T>(data);
             }
             catch (Exception exc)
@@ -20,6 +22,19 @@ namespace Api2
             }
 
             return default(T);
+        }
+
+        static public int ToInt(object s)
+        {
+            try
+            {
+                if (s == null) return 0;
+                return Convert.ToInt32(s);
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
         }
     }
 }

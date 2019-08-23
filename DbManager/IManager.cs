@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -11,6 +12,8 @@ namespace Api2
 
         bool Update(string json, out int id);
 
-        Array Get(int page, int pageSize, out int total_items, string sort_by, bool descending);
+        Array Get(int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList);
+
+        Task<int> Upload(string fileName, Stream stream, string options);
     }
 }

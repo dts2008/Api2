@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -50,6 +52,7 @@ namespace Api2
             WrongPayout = 8,
             WrongId = 9,
             WrongLogin = 10,
+            WrongRequest = 11,
             Internal = 100
         }
 
@@ -116,6 +119,7 @@ namespace Api2
             _apiMethods["get"] = new Tuple<ApiFunc, Api2Options>(Get, Api2Options.Token);
             _apiMethods["delete"] = new Tuple<ApiFunc, Api2Options>(Delete, Api2Options.Token | Api2Options.Post);
             _apiMethods["update"] = new Tuple<ApiFunc, Api2Options>(Update, Api2Options.Token | Api2Options.Post);
+            _apiMethods["upload"] = new Tuple<ApiFunc, Api2Options>(Upload, Api2Options.Token | Api2Options.Post);
         }
 
         #region Api
@@ -150,7 +154,11 @@ namespace Api2
                     return;
                 }
 
-                var data = manager.Get(current_page, page_size, out int total_items, sort_by, descending);
+                string filter = context.Request.Query["filter"];
+
+                var filterList = Tools.Deserialize<List<FilterItem>>(filter);
+
+                var data = manager.Get(current_page, page_size, out int total_items, sort_by, descending, filterList);
 
                 var result = new Api2Result(cmd);
 
@@ -253,6 +261,57 @@ namespace Api2
                     return;
                 }
 
+                var result = new Api2Result(cmd);
+                result["id"] = id;
+
+                await context.Response.WriteAsync(JsonConvert.SerializeObject(result));
+            }
+            catch (Exception exc)
+            {
+                Logger.Instance.Save(exc);
+                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+            }
+        }
+
+        private async Task Upload(HttpContext context, string cmd)
+        {
+            try
+            {
+                var boundary = context.Request.GetMultipartBoundary();
+
+                if (string.IsNullOrWhiteSpace(boundary))
+                {
+                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.WrongRequest)));
+                    return;
+                }
+
+                string type = context.Request.Query["type"];
+                string options = context.Request.Query["options"];
+
+                // check type
+                //Upload(string fileName, string description, Stream stream, string options)
+
+                if (!DBManager.Instance.Get(type, out IManager manager))
+                {
+                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    return;
+                }
+
+                var reader = new MultipartReader(boundary, context.Request.Body);
+                var section = await reader.ReadNextSectionAsync();
+
+                if (section == null)
+                {
+                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    return;
+                }
+
+                var fileSection = section.AsFileSection();
+                var fileName = fileSection.FileName;
+
+                int id = await manager.Upload(fileSection.FileName, fileSection.FileStream, options);
+
+                
                 var result = new Api2Result(cmd);
                 result["id"] = id;
 

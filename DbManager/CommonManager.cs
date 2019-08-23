@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -15,6 +16,14 @@ namespace Api2
         public FieldInfo[] typeFields;
 
         protected Action<T, T> updateAction = null;
+
+        private static Dictionary<Type, Func<FilterType, object, object, bool>> compareMethods = new Dictionary<Type, Func<FilterType, object, object, bool>>();
+
+        static CommonManager()
+        {
+            compareMethods[typeof(int)] = CompareInt;
+            compareMethods[typeof(int)] = CompareLong;
+        }
 
         public CommonManager()
         {
@@ -42,7 +51,7 @@ namespace Api2
             //}
         }
 
-        public bool Delete(int id)
+        public virtual bool Delete(int id)
         {
             int index = commonItems.FindIndex(i => i.id == id);
 
@@ -83,8 +92,30 @@ namespace Api2
             return true;
         }
 
-        public Array Get(int page, int pageSize, out int total_items, string sort_by, bool descending)
+        public virtual async Task<int> Upload(string fileName, Stream stream, string options)
         {
+            await Task<int>.CompletedTask;
+
+            return 0;
+        }
+
+        public Array Get(int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList)
+        {
+            List<FilterItem> filters = null;// new List<FilterItem>();
+
+            if (filterList?.Count > 0)
+            {
+                for (int i = 0; i < filterList.Count; ++i)
+                {
+                    var field = typeFields.FirstOrDefault(f => f.Name == filterList[i].name);
+                    if (field == null) continue;
+
+                    if (filters == null) filters = new List<FilterItem>();
+
+                    filterList[i].field = field;
+                    filters.Add(filterList[i]);
+                }
+            }
             var result = new List<T>();
 
             var items = string.IsNullOrEmpty(sort_by) ? commonItems : OrderByField(sort_by, descending);
@@ -92,16 +123,43 @@ namespace Api2
             total_items = items.Count;
             int startIndex = (page - 1) * pageSize;
 
-            for (int i = 0; i < pageSize; ++i)
+            int index = -1;
+
+            while (result.Count < pageSize)
             {
-                if (startIndex + i >= items.Count)
+                ++index;
+
+                if (startIndex + index >= items.Count)
                     break;
 
-                result.Add(items[startIndex + i]);
+                if (filters?.Count > 0)
+                {
+                    bool isContinue = false;
+                    for (int j = 0; j < filters.Count; ++j)
+                    {
+                        var fValue = filters[j].field.GetValue(items[startIndex + index]);
+                        if (fValue == null) continue;
+
+                        if (!compareMethods.TryGetValue(filters[j].field.FieldType, out var func)) continue;
+
+                            if (!func(filters[j].type, filters[j].value, fValue))
+                            {
+                                isContinue = true;
+                                break;
+                            }
+                        
+                    }
+
+                    if (isContinue) continue;
+                }
+
+                result.Add(items[startIndex + index]);
             }
 
             return result.ToArray();
         }
+
+        #region Private method(s)
 
         private List<T> OrderByField(string sort_by, bool descending)
         {
@@ -114,5 +172,39 @@ namespace Api2
 
             return commonItems.OrderByDescending(x => field.GetValue(x)).ToList();
         }
+
+        #region Compare Methods
+
+        private static bool CompareInt(FilterType type, object t1, object t2)
+        {
+                switch (type)
+                {
+                    case FilterType.Equal: return Tools.ToInt(t1) == Tools.ToInt(t2);
+                    case FilterType.MoreOrEqual: return Tools.ToInt(t1) >= Tools.ToInt(t2);
+                    case FilterType.LessOrEqual: return Tools.ToInt(t1) <= Tools.ToInt(t2);
+                    case FilterType.More: return Tools.ToInt(t1) > Tools.ToInt(t2);
+                    case FilterType.Less: return Tools.ToInt(t1) < Tools.ToInt(t2);
+                    default:
+                        return false;
+                }
+        }
+
+        private static bool CompareLong(FilterType type, object t1, object t2)
+        {
+            switch (type)
+            {
+                case FilterType.Equal: return Tools.ToInt(t1) == Tools.ToInt(t2);
+                case FilterType.MoreOrEqual: return Tools.ToInt(t1) >= Tools.ToInt(t2);
+                case FilterType.LessOrEqual: return Tools.ToInt(t1) <= Tools.ToInt(t2);
+                case FilterType.More: return Tools.ToInt(t1) > Tools.ToInt(t2);
+                case FilterType.Less: return Tools.ToInt(t1) < Tools.ToInt(t2);
+                default:
+                    return false;
+            }
+        }
+
+        #endregion Compare Methods
+
+        #endregion
     }
 }

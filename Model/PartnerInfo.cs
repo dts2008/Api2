@@ -13,7 +13,7 @@ namespace Api2
 
         public int manager;
 
-        public int added;
+        public long added;
 
         public int status;
 

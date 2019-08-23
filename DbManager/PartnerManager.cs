@@ -17,7 +17,7 @@ namespace Api2
                 item.name = $"Name {i + 1}";
                 item.status = sequence.Next(3) + 1;
                 item.website = $"www.site{i + 1}.com";
-                item.added = (int)((DateTimeOffset)DateTime.UtcNow.AddHours(-sequence.Next(720))).ToUnixTimeSeconds();
+                item.added = ((DateTimeOffset)DateTime.UtcNow.AddHours(-sequence.Next(720))).ToUnixTimeSeconds();
                 item.description = "";
                 item.manager = sequence.Next(3) + 1;
 
