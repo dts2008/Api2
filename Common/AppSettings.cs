@@ -18,7 +18,7 @@ namespace Api2
 
         private AppSettings()
         {
-            _builder.AddJsonFile("appsettings.json", optional: false);
+            _builder.AddJsonFile("appsettings.json", optional: true);
             _configuration = _builder.Build();
 
             //var connectionString = _configuration.GetConnectionString("MySQLConnection");

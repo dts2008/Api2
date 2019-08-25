@@ -18,5 +18,9 @@ namespace Api2
         public int status;
 
         public string description;
+
+        public int clientType;
+
+        public int currency;
     }
 }

@@ -19,6 +19,7 @@ namespace Api2
             None = 0,
             Token = 1,
             Post = 2,
+            Get = 3
         }
 
         public delegate Task ApiFunc(HttpContext context, string cmd);
@@ -120,6 +121,7 @@ namespace Api2
             _apiMethods["delete"] = new Tuple<ApiFunc, Api2Options>(Delete, Api2Options.Token | Api2Options.Post);
             _apiMethods["update"] = new Tuple<ApiFunc, Api2Options>(Update, Api2Options.Token | Api2Options.Post);
             _apiMethods["upload"] = new Tuple<ApiFunc, Api2Options>(Upload, Api2Options.Token | Api2Options.Post);
+            _apiMethods["download"] = new Tuple<ApiFunc, Api2Options>(Download, Api2Options.Token | Api2Options.Get);
         }
 
         #region Api
@@ -286,7 +288,7 @@ namespace Api2
                 }
 
                 string type = context.Request.Query["type"];
-                string options = context.Request.Query["options"];
+                string item = context.Request.Query["item"];
 
                 // check type
                 //Upload(string fileName, string description, Stream stream, string options)
@@ -309,7 +311,7 @@ namespace Api2
                 var fileSection = section.AsFileSection();
                 var fileName = fileSection.FileName;
 
-                int id = await manager.Upload(fileSection.FileName, fileSection.FileStream, options);
+                int id = await manager.Upload(fileSection.FileName, fileSection.FileStream, item);
 
                 
                 var result = new Api2Result(cmd);
@@ -320,7 +322,40 @@ namespace Api2
             catch (Exception exc)
             {
                 Logger.Instance.Save(exc);
-                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Internal)));
+            }
+        }
+
+        private async Task Download(HttpContext context, string cmd)
+        {
+            try
+            {
+                string type = context.Request.Query["type"];
+                int id = Tools.ToInt((string)context.Request.Query["id"]);
+
+                // check type
+                //Upload(string fileName, string description, Stream stream, string options)
+
+                if (!DBManager.Instance.Get(type, out IManager manager))
+                {
+                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    return;
+                }
+
+                string fileName = manager.Download(id);
+
+                if (string.IsNullOrWhiteSpace(fileName))
+                {
+                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    return;
+                }
+
+                await context.Response.SendFileAsync(fileName);
+            }
+            catch (Exception exc)
+            {
+                Logger.Instance.Save(exc);
+                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Internal)));
             }
         }
 

@@ -92,11 +92,16 @@ namespace Api2
             return true;
         }
 
-        public virtual async Task<int> Upload(string fileName, Stream stream, string options)
+        public virtual async Task<int> Upload(string fileName, Stream stream, string item)
         {
             await Task<int>.CompletedTask;
 
             return 0;
+        }
+
+        public virtual string Download(int id)
+        {
+            return string.Empty;
         }
 
         public Array Get(int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList)

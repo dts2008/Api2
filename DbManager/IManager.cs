@@ -14,6 +14,8 @@ namespace Api2
 
         Array Get(int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList);
 
-        Task<int> Upload(string fileName, Stream stream, string options);
+        Task<int> Upload(string fileName, Stream stream, string item);
+
+        string Download(int id);
     }
 }

@@ -15,11 +15,14 @@ namespace Api2
 
                 item.id = i + 1;
                 item.name = $"Name {i + 1}";
-                item.status = sequence.Next(3) + 1;
+                item.status = sequence.Next(5);
                 item.website = $"www.site{i + 1}.com";
                 item.added = ((DateTimeOffset)DateTime.UtcNow.AddHours(-sequence.Next(720))).ToUnixTimeSeconds();
                 item.description = "";
                 item.manager = sequence.Next(3) + 1;
+
+                item.clientType = sequence.Next(3);
+                item.currency = sequence.Next(3);
 
                 commonItems.Add(item);
             }
