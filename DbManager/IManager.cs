@@ -12,10 +12,14 @@ namespace Api2
 
         bool Update(string json, out int id);
 
-        Array Get(int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList);
+        List<CommonInfo> Get(int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList);
+
+        CommonInfo Get(int id);
 
         Task<int> Upload(string fileName, Stream stream, string item);
 
         string Download(int id);
+
+        Dictionary<string, List<CommonInfo>> Dependence(List<CommonInfo> origin);
     }
 }

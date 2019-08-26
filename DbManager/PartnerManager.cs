@@ -32,5 +32,29 @@ namespace Api2
         {
             if (string.IsNullOrEmpty(newValue.password)) newValue.password = oldValue.password;
         }
+
+        public override Dictionary<string, List<CommonInfo>> Dependence(List<CommonInfo> origin)
+        {
+            var result = new Dictionary<string, List<CommonInfo>>();
+            var partners = new List<CommonInfo>();
+
+            result[UserManager.typeName] = partners;
+            DBManager.Instance.Get(UserManager.typeName, out var users);
+
+            foreach (var o in origin)
+            {
+                var partner = o as PartnerInfo;
+                if (partner == null) continue;
+
+                if (partners.FindIndex(k => k.id == partner.manager) != -1)
+                    continue;
+
+                var item = users.Get(partner.manager);
+                if (item != null)
+                    partners.Add(item);
+            }
+
+            return result;
+        }
     }
 }

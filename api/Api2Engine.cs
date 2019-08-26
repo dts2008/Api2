@@ -146,6 +146,8 @@ namespace Api2
                 string sort_by = context.Request.Query["sort_by"];
                 bool.TryParse(context.Request.Query["descending"], out bool descending);
 
+                bool dependence = Tools.ToInt(context.Request.Query["dependence"].ToString()) == 1;
+                
 
                 if (current_page <= 0) current_page = 1;
                 if (page_size <= 0) page_size = 5;
@@ -160,17 +162,27 @@ namespace Api2
 
                 var filterList = Tools.Deserialize<List<FilterItem>>(filter);
 
-                var data = manager.Get(current_page, page_size, out int total_items, sort_by, descending, filterList);
+                var items = manager.Get(current_page, page_size, out int total_items, sort_by, descending, filterList);
 
                 var result = new Api2Result(cmd);
 
-                result["data"] = new Dictionary<string, object>()
+                var data = new Dictionary<string, object>()
                         {
                             { "total_items", total_items },
                             { "current_page", current_page },
                             { "page_size", page_size },
-                            { "items", data },
+                            { "items", items },
                         };
+
+                result["data"] = data;
+
+                if (dependence)
+                {
+                    var dep = manager.Dependence(items);
+                    if (dep != null)
+                        data["dependence"] = dep;
+                }
+
 
                 //var result = new Dictionary<string, object>()
                 //        {

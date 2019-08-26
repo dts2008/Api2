@@ -9,6 +9,8 @@ namespace Api2
 {
     public class CommonManager<T>: IManager where T: CommonInfo
     {
+        public static string typeName;
+
         public List<T> commonItems = new List<T>();
 
         public Random sequence = new Random((int)DateTime.UtcNow.Ticks);
@@ -27,6 +29,8 @@ namespace Api2
 
         public CommonManager()
         {
+            typeName = typeof(T).Name.ToLower();
+
             var t = typeof(T);
             typeFields = t.GetFields();
 
@@ -104,7 +108,7 @@ namespace Api2
             return string.Empty;
         }
 
-        public Array Get(int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList)
+        public List<CommonInfo> Get(int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList)
         {
             List<FilterItem> filters = null;// new List<FilterItem>();
 
@@ -121,7 +125,7 @@ namespace Api2
                     filters.Add(filterList[i]);
                 }
             }
-            var result = new List<T>();
+            var result = new List<CommonInfo>();
 
             var items = string.IsNullOrEmpty(sort_by) ? commonItems : OrderByField(sort_by, descending);
 
@@ -161,7 +165,17 @@ namespace Api2
                 result.Add(items[startIndex + index]);
             }
 
-            return result.ToArray();
+            return result;
+        }
+
+        public virtual CommonInfo Get(int id)
+        {
+            return commonItems.Find(i => i.id == id);
+        }
+
+        public virtual Dictionary<string, List<CommonInfo>> Dependence(List<CommonInfo> origin)
+        {
+            return null;
         }
 
         #region Private method(s)
