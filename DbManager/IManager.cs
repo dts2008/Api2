@@ -16,6 +16,8 @@ namespace Api2
 
         CommonInfo Get(int id);
 
+        CommonInfo Get(string field, object value);
+
         Task<int> Upload(string fileName, Stream stream, string item);
 
         string Download(int id);

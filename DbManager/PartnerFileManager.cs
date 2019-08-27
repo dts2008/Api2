@@ -34,18 +34,29 @@ namespace Api2
                 newItem.fileToken = currentItem.fileToken;
             };
 
-            var pfInfo = new PartnerFileInfo();
 
-            pfInfo.fileToken = "80f0f214f3d74cb6b2c92395bf13e2ba.png";
+            var files = Directory.GetFiles(resourcePath);
 
-            string path = Path.Combine(resourcePath, pfInfo.fileToken);
+            int i = 0;
+            foreach (var file in files)
+            {
+                var pfInfo = new PartnerFileInfo();
 
-            pfInfo.id = 1;
-            pfInfo.added = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
-            pfInfo.name = "test001.png";
-            pfInfo.size = new FileInfo(path).Length;
+                pfInfo.fileToken = Path.GetFileName(file);
 
-            commonItems.Add(pfInfo);
+
+                //string path = Path.GetFileName(file);// Path.Combine(resourcePath, pfInfo.fileToken);
+
+                pfInfo.id = i + 1;
+                pfInfo.added = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
+                pfInfo.name = $"test{(i + 1):D3}" + Path.GetExtension(file);
+                pfInfo.size = new FileInfo(file).Length;
+                pfInfo.partnerId = 1;
+
+                commonItems.Add(pfInfo);
+
+                ++i;
+            }
         }
 
         public override async Task<int> Upload(string fileName, Stream stream, string item)

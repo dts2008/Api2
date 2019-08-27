@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Api2
@@ -35,6 +37,20 @@ namespace Api2
             {
                 return 0;
             }
+        }
+
+        static public string GetMD5(string str)
+        {
+            var md5 = new MD5CryptoServiceProvider();
+            return ToHex(md5.ComputeHash(Encoding.ASCII.GetBytes(str)));
+        }
+
+        static public string ToHex(byte[] data)
+        {
+            var hash = new StringBuilder();
+            for (int i = 0; i < 16; ++i) hash.AppendFormat("{0:x2}", data[i]);
+
+            return hash.ToString();
         }
     }
 }

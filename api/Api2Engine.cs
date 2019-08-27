@@ -22,7 +22,12 @@ namespace Api2
             Get = 3
         }
 
-        public delegate Task ApiFunc(HttpContext context, string cmd);
+        public delegate Task ApiFunc(HttpContext context, string cmd, UserItem userItem);
+
+        public class UserItem
+        {
+            public int uid;
+        }
 
         #endregion
 
@@ -36,6 +41,8 @@ namespace Api2
         {
             get { return _instance; }
         }
+
+        private static TimeoutDataBuffer<string, UserItem> _activeUsers = new TimeoutDataBuffer<string, UserItem>(3600L * 10000000);
 
         #endregion
 
@@ -54,6 +61,7 @@ namespace Api2
             WrongId = 9,
             WrongLogin = 10,
             WrongRequest = 11,
+            Token = 12,
             Internal = 100
         }
 
@@ -74,6 +82,7 @@ namespace Api2
             { Api2Error.WrongPayout, "Parameters issue. Please, check payout." },
             { Api2Error.WrongId, "Parameters issue. Wrong Id." },
             { Api2Error.WrongLogin, "User with same Login alrady axist." },
+            { Api2Error.Token, "Wrong or expired token." },
             { Api2Error.Internal, "Internal error." },
         };
 
@@ -97,12 +106,20 @@ namespace Api2
             if (!_apiMethods.TryGetValue(cmd, out var apiFunc))
                 return;
 
+            UserItem userItem = null;
             if ((apiFunc.Item2 & Api2Options.Token) != 0)
             {
+                string token = context.Request.Query["token"];
+
+                if (!_activeUsers.GetRenew(token, out userItem) || userItem == null)
+                {
+                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    return;
+                }
                 // check tokens
             }
 
-            await apiFunc.Item1(context, cmd);
+            await apiFunc.Item1(context, cmd, userItem);
         }
 
         public bool IsApi(string cmd)
@@ -126,15 +143,46 @@ namespace Api2
 
         #region Api
 
-        private async Task Auth(HttpContext context, string cmd)
+        private async Task Auth(HttpContext context, string cmd, UserItem userItem)
         {
+            if (!DBManager.Instance.Get("userinfo", out IManager manager))
+            {
+                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                return;
+            }
+
+            string login = context.Request.Query["login"];
+            string password = context.Request.Query["password"];
+
+            if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password))
+            {
+                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                return;
+            }
+
+            var user = manager.Get("login", login) as UserInfo;
+            if (user == null)
+            {
+                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                return;
+            }
+
+            if (string.Compare(user.password, password, true) != 0)
+            {
+                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Authorization)));
+                return;
+            }
+
             var result = new Api2Result(cmd);
-            result["token"] = Guid.NewGuid().ToString("N");
+            string token = Guid.NewGuid().ToString("N");
+            result["token"] = token;
+
+            _activeUsers.Set(token, new UserItem() { uid = user.id });
 
             await context.Response.WriteAsync(JsonConvert.SerializeObject(result));
         }
 
-        private async Task Get(HttpContext context, string cmd)
+        private async Task Get(HttpContext context, string cmd, UserItem userItem)
         {
             try
             {
@@ -200,7 +248,7 @@ namespace Api2
             }
         }
 
-        private async Task Delete(HttpContext context, string cmd)
+        private async Task Delete(HttpContext context, string cmd, UserItem userItem)
         {
             try
             {
@@ -244,7 +292,7 @@ namespace Api2
             }
         }
 
-        private async Task Update(HttpContext context, string cmd)
+        private async Task Update(HttpContext context, string cmd, UserItem userItem)
         {
             try
             {
@@ -287,7 +335,7 @@ namespace Api2
             }
         }
 
-        private async Task Upload(HttpContext context, string cmd)
+        private async Task Upload(HttpContext context, string cmd, UserItem userItem)
         {
             try
             {
@@ -338,7 +386,7 @@ namespace Api2
             }
         }
 
-        private async Task Download(HttpContext context, string cmd)
+        private async Task Download(HttpContext context, string cmd, UserItem userItem)
         {
             try
             {

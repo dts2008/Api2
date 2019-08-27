@@ -15,6 +15,7 @@ namespace Api2
 
                 item.id = i + 1;
                 item.login = $"login{i + 1}";
+                item.password = Tools.GetMD5("123");
                 item.name = $"Name {i + 1}";
                 item.role = sequence.Next(3) + 1;
                 item.partners = sequence.Next(50);

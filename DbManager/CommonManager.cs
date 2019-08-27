@@ -25,6 +25,7 @@ namespace Api2
         {
             compareMethods[typeof(int)] = CompareInt;
             compareMethods[typeof(int)] = CompareLong;
+            compareMethods[typeof(string)] = CompareString;
         }
 
         public CommonManager()
@@ -173,6 +174,19 @@ namespace Api2
             return commonItems.Find(i => i.id == id);
         }
 
+        public virtual CommonInfo Get(string field, object value)
+        {
+            var typeField = typeFields.FirstOrDefault(f => f.Name == field);
+            if (typeField == null) return null;
+
+            //var fValue = typeField.GetValue();
+            //if (fValue == null) continue;
+
+            if (!compareMethods.TryGetValue(typeField.FieldType, out var func)) return null;
+
+            return commonItems.Find(k => func(FilterType.Equal, value, typeField.GetValue(k)));
+        }
+
         public virtual Dictionary<string, List<CommonInfo>> Dependence(List<CommonInfo> origin)
         {
             return null;
@@ -217,6 +231,16 @@ namespace Api2
                 case FilterType.LessOrEqual: return Tools.ToInt(t1) <= Tools.ToInt(t2);
                 case FilterType.More: return Tools.ToInt(t1) > Tools.ToInt(t2);
                 case FilterType.Less: return Tools.ToInt(t1) < Tools.ToInt(t2);
+                default:
+                    return false;
+            }
+        }
+
+        private static bool CompareString(FilterType type, object t1, object t2)
+        {
+            switch (type)
+            {
+                case FilterType.Equal: return string.Compare(t1.ToString(), t2.ToString(), true) == 0;
                 default:
                     return false;
             }
