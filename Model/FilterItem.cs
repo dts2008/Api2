@@ -13,15 +13,16 @@ namespace Api2
         LessOrEqual = 2,
         More = 3,
         Less = 4,
+        In = 5
     }
     public class FilterItem
     {
-        public string name;
+        public string name { get; set; }
 
-        public string value;
+        public string value { get; set; }
 
-        public FilterType type;
+        public FilterType type { get; set; }
 
-        public FieldInfo field;
+        public FieldInfo field { get; set; }
     }
 }

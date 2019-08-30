@@ -1,26 +1,28 @@
-﻿using System;
+﻿using Dapper.Contrib.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace Api2
 {
+    [Table("partnerinfo")]
     public class PartnerInfo : CommonInfo
     {
-        public string name;
-        
-        public string website;
+        public string name { get; set; }
 
-        public int manager;
+        public string website { get; set; }
 
-        public long added;
+        public int manager { get; set; }
 
-        public int status;
+        public long added { get; set; }
 
-        public string description;
+        public int status { get; set; }
 
-        public int clientType;
+        public string description { get; set; }
 
-        public int currency;
+        public int clientType { get; set; }
+
+        public int currency { get; set; }
     }
 }

@@ -26,6 +26,20 @@ namespace Api2
             return default(T);
         }
 
+        static public string ToJson(object o)
+        {
+            try
+            {
+                return JsonConvert.SerializeObject(o);
+            }
+            catch (Exception exc)
+            {
+                Logger.Instance.Save(exc);
+            }
+
+            return string.Empty;
+        }
+
         static public int ToInt(object s)
         {
             try

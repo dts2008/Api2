@@ -23,5 +23,7 @@ namespace Api2
         string Download(int id);
 
         Dictionary<string, List<CommonInfo>> Dependence(List<CommonInfo> origin);
+
+        Type ItemType();
     }
 }

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Api2
 {
-    public class PartnerFileManager : CommonManager<PartnerFileInfo>
+    public class PartnerFileManager : CommonDBManager<PartnerFileInfo>
     {
         public static string resourcePath = string.Empty;
 
@@ -24,39 +24,52 @@ namespace Api2
             if (!Directory.Exists(resourcePath))
                 Directory.CreateDirectory(resourcePath);
 
-            updateAction = (newItem, currentItem) => 
-            {
-                newItem.added = currentItem.added;
-                newItem.name = currentItem.name;
-                newItem.size = currentItem.size;
-                newItem.added = currentItem.added;
-                newItem.partnerId = currentItem.partnerId;
-                newItem.fileToken = currentItem.fileToken;
-            };
+            //updateAction = (newItem, currentItem) => 
+            //{
+            //    newItem.added = currentItem.added;
+            //    newItem.name = currentItem.name;
+            //    newItem.size = currentItem.size;
+            //    newItem.added = currentItem.added;
+            //    newItem.partnerId = currentItem.partnerId;
+            //    newItem.fileToken = currentItem.fileToken;
+            //};
 
 
-            var files = Directory.GetFiles(resourcePath);
+            //var files = Directory.GetFiles(resourcePath);
 
-            int i = 0;
-            foreach (var file in files)
-            {
-                var pfInfo = new PartnerFileInfo();
+            //int i = 0;
+            //foreach (var file in files)
+            //{
+            //    var pfInfo = new PartnerFileInfo();
 
-                pfInfo.fileToken = Path.GetFileName(file);
+            //    pfInfo.fileToken = Path.GetFileName(file);
 
 
-                //string path = Path.GetFileName(file);// Path.Combine(resourcePath, pfInfo.fileToken);
+            //    //string path = Path.GetFileName(file);// Path.Combine(resourcePath, pfInfo.fileToken);
 
-                pfInfo.id = i + 1;
-                pfInfo.added = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
-                pfInfo.name = $"test{(i + 1):D3}" + Path.GetExtension(file);
-                pfInfo.size = new FileInfo(file).Length;
-                pfInfo.partnerId = 1;
+            //    pfInfo.id = i + 1;
+            //    pfInfo.added = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
+            //    pfInfo.name = $"test{(i + 1):D3}" + Path.GetExtension(file);
+            //    pfInfo.size = new FileInfo(file).Length;
+            //    pfInfo.partnerId = 1;
 
-                commonItems.Add(pfInfo);
+            //    commonItems.Add(pfInfo);
 
-                ++i;
-            }
+            //    ++i;
+            //}
+        }
+
+        public override bool UpdateItem(PartnerFileInfo newValue, PartnerFileInfo oldValue)
+        {
+            newValue.added = oldValue.added;
+            newValue.name = oldValue.name;
+            newValue.size = oldValue.size;
+            newValue.added = oldValue.added;
+            newValue.partnerId = oldValue.partnerId;
+            newValue.fileToken = oldValue.fileToken;
+
+            // check rigt
+            return true;
         }
 
         public override async Task<int> Upload(string fileName, Stream stream, string item)
@@ -77,30 +90,31 @@ namespace Api2
                     await stream.CopyToAsync(file);
                 }
 
-                pfInfo.id = commonItems.Count > 0 ? commonItems.Max(i => i.id) + 1 : 1;
+                //pfInfo.id = commonItems.Count > 0 ? commonItems.Max(i => i.id) + 1 : 1;
                 pfInfo.added = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
                 pfInfo.name = fileName;
                 pfInfo.size = new FileInfo(path).Length;
-
-                
                 pfInfo.partnerId = info.partnerId;
                 pfInfo.description = info.description;
+                int id = 0;
 
                 if (info.id != 0)
                 {
-                    pfInfo.id = info.id;
-
-                    int index = commonItems.FindIndex(k => k.id == info.id);
-                    if (index == -1) commonItems.Add(pfInfo);
+                    var pfi = Get(info.id) as PartnerFileInfo;
+                    if (pfi == null) Update(Tools.ToJson(pfInfo), out id);
                     else
                     {
-                        File.Delete(Path.Combine(resourcePath, commonItems[index].fileToken));
-                        commonItems[index] = pfInfo;
+                        pfInfo.id = info.id;
+                        File.Delete(Path.Combine(resourcePath, pfi.fileToken));
+                        Update(Tools.ToJson(pfInfo), out id);
                     }
                 }
-                else commonItems.Add(pfInfo);
+                else
+                {
+                    Update(Tools.ToJson(pfInfo), out id);
+                }
 
-                return pfInfo.id;
+                return id;
             }
             catch (Exception exc)
             {
@@ -112,10 +126,10 @@ namespace Api2
 
         public override string Download(int id)
         {
-            int index = commonItems.FindIndex(k => k.id == id);
-            if (index == -1) return string.Empty;
+            var file = Get(id) as PartnerFileInfo;// commonItems.FindIndex(k => k.id == id);
+            if (file == null) return string.Empty;
 
-            return Path.Combine(resourcePath, commonItems[index].fileToken);
+            return Path.Combine(resourcePath, file.fileToken);
         }
     }
 }

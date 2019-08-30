@@ -38,6 +38,11 @@ namespace Api2
             Init();
         }
 
+        public virtual Type ItemType()
+        {
+            return typeof(T);
+        }
+
         public virtual void Init()
         {
             //for (int i = 0; i < 30; ++i)

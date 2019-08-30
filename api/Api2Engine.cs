@@ -82,6 +82,7 @@ namespace Api2
             { Api2Error.WrongPayout, "Parameters issue. Please, check payout." },
             { Api2Error.WrongId, "Parameters issue. Wrong Id." },
             { Api2Error.WrongLogin, "User with same Login alrady axist." },
+            { Api2Error.WrongRequest, "Wrong request." },
             { Api2Error.Token, "Wrong or expired token." },
             { Api2Error.Internal, "Internal error." },
         };
@@ -113,7 +114,7 @@ namespace Api2
 
                 if (!_activeUsers.GetRenew(token, out userItem) || userItem == null)
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    await context.Response.WriteAsync(GetError(Api2Error.Token));
                     return;
                 }
                 // check tokens
@@ -147,7 +148,7 @@ namespace Api2
         {
             if (!DBManager.Instance.Get("userinfo", out IManager manager))
             {
-                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                 return;
             }
 
@@ -156,22 +157,24 @@ namespace Api2
 
             if (string.IsNullOrEmpty(login) || string.IsNullOrEmpty(password))
             {
-                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                 return;
             }
 
             var user = manager.Get("login", login) as UserInfo;
             if (user == null)
             {
-                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                 return;
             }
 
             if (string.Compare(user.password, password, true) != 0)
             {
-                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Authorization)));
+                await context.Response.WriteAsync(GetError(Api2Error.Authorization));
                 return;
             }
+
+            ((UserManager)manager).UpdateActivity(user);
 
             var result = new Api2Result(cmd);
             string token = Guid.NewGuid().ToString("N");
@@ -202,7 +205,7 @@ namespace Api2
 
                 if (!DBManager.Instance.Get(type, out IManager manager))
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                     return;
                 }
 
@@ -244,7 +247,7 @@ namespace Api2
             catch (Exception exc)
             {
                 Logger.Instance.Save(exc);
-                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                await context.Response.WriteAsync(GetError(Api2Error.Parameters));
             }
         }
 
@@ -260,7 +263,7 @@ namespace Api2
 
                 if (string.IsNullOrEmpty(body))
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                     return;
                 }
 
@@ -269,14 +272,14 @@ namespace Api2
 
                 if (!DBManager.Instance.Get(type, out IManager manager))
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                     return;
                 }
 
                 var del = Tools.Deserialize<Api2Delete>(body);
                 if (del == null || del.id <= 0 || !manager.Delete(del.id))
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.WrongId)));
+                    await context.Response.WriteAsync(GetError(Api2Error.WrongId));
                     return;
                 }
 
@@ -288,7 +291,7 @@ namespace Api2
             catch (Exception exc)
             {
                 Logger.Instance.Save(exc);
-                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                await context.Response.WriteAsync(GetError(Api2Error.Parameters));
             }
         }
 
@@ -304,7 +307,7 @@ namespace Api2
 
                 if (string.IsNullOrEmpty(body))
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                     return;
                 }
 
@@ -313,13 +316,13 @@ namespace Api2
 
                 if (!DBManager.Instance.Get(type, out IManager manager))
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                     return;
                 }
 
                 if (!manager.Update(body, out int id))
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                     return;
                 }
 
@@ -331,7 +334,7 @@ namespace Api2
             catch (Exception exc)
             {
                 Logger.Instance.Save(exc);
-                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                await context.Response.WriteAsync(GetError(Api2Error.Parameters));
             }
         }
 
@@ -343,7 +346,7 @@ namespace Api2
 
                 if (string.IsNullOrWhiteSpace(boundary))
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.WrongRequest)));
+                    await context.Response.WriteAsync(GetError(Api2Error.WrongRequest));
                     return;
                 }
 
@@ -355,7 +358,7 @@ namespace Api2
 
                 if (!DBManager.Instance.Get(type, out IManager manager))
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                     return;
                 }
 
@@ -364,7 +367,7 @@ namespace Api2
 
                 if (section == null)
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                     return;
                 }
 
@@ -382,7 +385,7 @@ namespace Api2
             catch (Exception exc)
             {
                 Logger.Instance.Save(exc);
-                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Internal)));
+                await context.Response.WriteAsync(GetError(Api2Error.Internal));
             }
         }
 
@@ -398,7 +401,7 @@ namespace Api2
 
                 if (!DBManager.Instance.Get(type, out IManager manager))
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                     return;
                 }
 
@@ -406,7 +409,7 @@ namespace Api2
 
                 if (string.IsNullOrWhiteSpace(fileName))
                 {
-                    await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Parameters)));
+                    await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                     return;
                 }
 
@@ -415,7 +418,7 @@ namespace Api2
             catch (Exception exc)
             {
                 Logger.Instance.Save(exc);
-                await context.Response.WriteAsync(JsonConvert.SerializeObject(GetError(Api2Error.Internal)));
+                await context.Response.WriteAsync(GetError(Api2Error.Internal));
             }
         }
 
