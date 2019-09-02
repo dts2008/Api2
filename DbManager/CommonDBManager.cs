@@ -112,6 +112,9 @@ namespace Api2
             }
 
             long result = 0;
+            T ci = item as T;
+            if (!InsertItem(ci))
+                return false;
 
             if (!DBCommand((IDbConnection db) => {
                 result = db.Insert(item as T);
