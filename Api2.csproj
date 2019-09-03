@@ -12,10 +12,14 @@
     <PackageReference Include="Dapper" Version="2.0.4" />
     <PackageReference Include="Dapper.Contrib" Version="2.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.1.2" PrivateAssets="All" />
     <PackageReference Include="MySql.Data" Version="8.0.17" />
-    <PackageReference Include="MySql.Data.EntityFrameworkCore" Version="8.0.17" />
-    <PackageReference Include="NLog" Version="4.6.6" />
+    <PackageReference Include="NLog" Version="4.6.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

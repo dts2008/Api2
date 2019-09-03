@@ -1,4 +1,6 @@
-CREATE SCHEMA backoffice
+CREATE SCHEMA backoffice;
+
+USE backoffice;
 
 CREATE TABLE userinfo 
 (
