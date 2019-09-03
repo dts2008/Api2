@@ -61,13 +61,16 @@ namespace Api2
 
         public override bool UpdateItem(PartnerFileInfo newValue, PartnerFileInfo oldValue)
         {
-            newValue.added = oldValue.added;
-            newValue.name = oldValue.name;
-            newValue.size = oldValue.size;
-            newValue.added = oldValue.added;
-            newValue.partnerId = oldValue.partnerId;
-            newValue.fileToken = oldValue.fileToken;
+            if (newValue.name == oldValue.name)
+            {
+                newValue.added = oldValue.added;
+                newValue.name = oldValue.name;
+                newValue.size = oldValue.size;
+                newValue.added = oldValue.added;
+                newValue.fileToken = oldValue.fileToken;
+            }
 
+            newValue.partnerId = oldValue.partnerId;
             // check rigt
             return true;
         }
