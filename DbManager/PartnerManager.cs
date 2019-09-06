@@ -28,7 +28,7 @@ namespace Api2
             //}
         }
 
-        public override bool UpdateItem(PartnerInfo newValue, PartnerInfo oldValue)
+        public override bool UpdateItem(UserItem userItem, PartnerInfo newValue, PartnerInfo oldValue)
         {
             //if (string.IsNullOrEmpty(newValue.password)) newValue.password = oldValue.password;
 
@@ -37,14 +37,15 @@ namespace Api2
             return true;
         }
 
-        public override bool InsertItem(PartnerInfo newValue)
+        public override bool InsertItem(UserItem userItem, PartnerInfo newValue)
         {
             newValue.added = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
+            newValue.manager = userItem.uid;
 
             return true;
         }
 
-        public override Dictionary<string, List<CommonInfo>> Dependence(List<CommonInfo> origin)
+        public override Dictionary<string, List<CommonInfo>> Dependence(UserItem userItem, List<CommonInfo> origin)
         {
             var result = new Dictionary<string, List<CommonInfo>>();
 
@@ -59,6 +60,8 @@ namespace Api2
 
                 if (managers.FindIndex(k => k == partner.manager) != -1)
                     continue;
+
+                managers.Add(partner.manager);
             }
 
             if (managers.Count > 0)
@@ -68,7 +71,7 @@ namespace Api2
                 filter.type = FilterType.In;
                 filter.value = $"({String.Join(",", managers)})";
 
-                var partners = users.Get(0, -1, out int total_items, string.Empty, false, new List<FilterItem>() { filter });
+                var partners = users.Get(userItem, 0, -1, out int total_items, string.Empty, false, new List<FilterItem>() { filter });
                 result[UserManager.typeName] = partners;
             }
 

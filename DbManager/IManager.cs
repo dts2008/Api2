@@ -8,22 +8,20 @@ namespace Api2
 {
     public interface IManager
     {
-        bool Delete(int id);
+        bool Delete(UserItem userItem, int id);
 
-        bool Update(string json, out int id);
+        bool Update(UserItem userItem, string json, out int id);
 
-        List<CommonInfo> Get(int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList);
+        List<CommonInfo> Get(UserItem userItem, int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList);
 
-        CommonInfo Get(int id);
+        CommonInfo Get(UserItem userItem, int id);
 
         CommonInfo Get(string field, object value);
 
-        Task<int> Upload(string fileName, Stream stream, string item);
+        Task<int> Upload(UserItem userItem, string fileName, Stream stream, string item);
 
-        string Download(int id);
+        string Download(UserItem userItem, int id);
 
-        Dictionary<string, List<CommonInfo>> Dependence(List<CommonInfo> origin);
-
-        Type ItemType();
+        Dictionary<string, List<CommonInfo>> Dependence(UserItem userItem, List<CommonInfo> origin);
     }
 }

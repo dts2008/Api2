@@ -24,11 +24,6 @@ namespace Api2
 
         public delegate Task ApiFunc(HttpContext context, string cmd, UserItem userItem);
 
-        public class UserItem
-        {
-            public int uid;
-        }
-
         #endregion
 
         #region Field(s)
@@ -180,7 +175,7 @@ namespace Api2
             string token = Guid.NewGuid().ToString("N");
             result["token"] = token;
 
-            _activeUsers.Set(token, new UserItem() { uid = user.id });
+            _activeUsers.Set(token, new UserItem() { uid = user.id, user = user });
 
             await context.Response.WriteAsync(JsonConvert.SerializeObject(result));
         }
@@ -213,7 +208,7 @@ namespace Api2
 
                 var filterList = Tools.Deserialize<List<FilterItem>>(filter);
 
-                var items = manager.Get(current_page, page_size, out int total_items, sort_by, descending, filterList);
+                var items = manager.Get(userItem, current_page, page_size, out int total_items, sort_by, descending, filterList);
 
                 var result = new Api2Result(cmd);
 
@@ -229,7 +224,7 @@ namespace Api2
 
                 if (dependence)
                 {
-                    var dep = manager.Dependence(items);
+                    var dep = manager.Dependence(userItem, items);
                     if (dep != null)
                         data["dependence"] = dep;
                 }
@@ -277,7 +272,7 @@ namespace Api2
                 }
 
                 var del = Tools.Deserialize<Api2Delete>(body);
-                if (del == null || del.id <= 0 || !manager.Delete(del.id))
+                if (del == null || del.id <= 0 || !manager.Delete(userItem, del.id))
                 {
                     await context.Response.WriteAsync(GetError(Api2Error.WrongId));
                     return;
@@ -320,7 +315,7 @@ namespace Api2
                     return;
                 }
 
-                if (!manager.Update(body, out int id))
+                if (!manager.Update(userItem, body, out int id))
                 {
                     await context.Response.WriteAsync(GetError(Api2Error.Parameters));
                     return;
@@ -374,7 +369,7 @@ namespace Api2
                 var fileSection = section.AsFileSection();
                 var fileName = fileSection.FileName;
 
-                int id = await manager.Upload(fileSection.FileName, fileSection.FileStream, item);
+                int id = await manager.Upload(userItem, fileSection.FileName, fileSection.FileStream, item);
 
                 
                 var result = new Api2Result(cmd);
@@ -405,7 +400,7 @@ namespace Api2
                     return;
                 }
 
-                string fileName = manager.Download(id);
+                string fileName = manager.Download(userItem, id);
 
                 if (string.IsNullOrWhiteSpace(fileName))
                 {

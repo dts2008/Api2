@@ -15,13 +15,17 @@ namespace Api2
 {
     public class CommonDBManager<T> : IManager where T : CommonInfo
     {
+        #region Field(s)
+
         public static string typeName;
 
-        public FieldInfo[] typeFields;
-
-        //protected Action<T, T> updateAction = null;
+        public PropertyInfo[] typeProperties;
 
         private static string connectionString;
+
+        #endregion
+
+        #region Constructor(s)
 
         static CommonDBManager()
         {
@@ -33,46 +37,22 @@ namespace Api2
             typeName = typeof(T).Name.ToLower();
 
             var t = typeof(T);
-            typeFields = t.GetFields();
+            typeProperties = t.GetProperties();
 
             Init();
         }
 
-        public virtual Type ItemType()
-        {
-            return typeof(T);
-        }
-
-        public virtual bool UpdateItem(T newValue, T oldValue)
-        {
-            return true;
-        }
-
-        public virtual bool InsertItem(T newValue)
-        {
-            return true;
-        }
+        #endregion
 
         public virtual void Init()
         {
-            //for (int i = 0; i < 30; ++i)
-            //{
-            //    var item = new UserInfo();
-
-            //    item.id = i + 1;
-            //    item.login = $"login{i + 1}";
-            //    item.name = $"Name {i + 1}";
-            //    item.role = sequence.Next(3) + 1;
-            //    item.partners = sequence.Next(50);
-            //    item.activity = (int)((DateTimeOffset)DateTime.UtcNow.AddHours(-sequence.Next(72))).ToUnixTimeSeconds();
-            //    item.contacts = "";
-
-            //    userItems.Add(item);
-            //}
         }
 
-        public virtual bool Delete(int id)
+        public virtual bool Delete(UserItem userItem, int id)
         {
+            var item = Get(userItem, id) as T;
+            if (item == null || DeleteItem(userItem, item)) return false;
+
             return DBCommand((IDbConnection db) =>
             {
                 db.Execute($"delete {typeName} where id = {id}");
@@ -80,7 +60,7 @@ namespace Api2
             );
         }
 
-        public bool Update(string data, out int id)
+        public virtual bool Update(UserItem userItem, string data, out int id)
         {
             var item = Tools.Deserialize<T>(data);
             id = 0;
@@ -89,19 +69,10 @@ namespace Api2
 
             if (item.id > 0)
             {
-                //if (updateAction != null)
-                //{
-                //    var currentItem = Get(item.id) as T;
-
-                //    if (currentItem == null) return false;
-
-                //    updateAction.Invoke(item, currentItem);
-                //}
-
-                var currentItem = Get(item.id) as T;
+                var currentItem = Get(userItem, item.id) as T;
                 if (currentItem == null) return false;
 
-                if (!UpdateItem(item, currentItem))
+                if (!UpdateItem(userItem, item, currentItem))
                     return false;
 
                 if (!DBCommand((IDbConnection db) => {
@@ -113,7 +84,7 @@ namespace Api2
 
             long result = 0;
             T ci = item as T;
-            if (!InsertItem(ci))
+            if (!InsertItem(userItem, ci))
                 return false;
 
             if (!DBCommand((IDbConnection db) => {
@@ -125,19 +96,19 @@ namespace Api2
             return true;
         }
 
-        public virtual async Task<int> Upload(string fileName, Stream stream, string item)
+        public virtual async Task<int> Upload(UserItem userItem, string fileName, Stream stream, string item)
         {
             await Task<int>.CompletedTask;
 
             return 0;
         }
 
-        public virtual string Download(int id)
+        public virtual string Download(UserItem userItem, int id)
         {
             return string.Empty;
         }
 
-        public List<CommonInfo> Get(int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList)
+        public virtual List<CommonInfo> Get(UserItem userItem, int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList)
         {
             total_items = 0;
             string desc = descending ? "DESC" : string.Empty;
@@ -148,7 +119,7 @@ namespace Api2
                 
                 foreach (var filters in filterList)
                 {
-                    var field = typeFields.FirstOrDefault(f => f.Name == filters.name);
+                    var field = typeProperties.FirstOrDefault(f => f.Name == filters.name);
                     if (field == null) continue;
 
                     if (where.Length > 0) where.Append("AND ");
@@ -160,6 +131,8 @@ namespace Api2
                 if (where.Length > 0) where.Insert(0, " WHERE ");
             }
 
+            if (string.IsNullOrEmpty(sort_by)) sort_by = "id";
+
             string query = pageSize != -1 ?
                 $"SELECT * FROM {typeName} {where.ToString()} ORDER BY {sort_by} {desc} LIMIT {(page - 1) * pageSize}, {pageSize} " :
                 $"SELECT * FROM {typeName} {where.ToString()} ORDER BY {sort_by} {desc} ";
@@ -169,14 +142,14 @@ namespace Api2
 
             if (!DBCommand((IDbConnection db) => {
                 result = db.Query<T>(query);
-                result_count = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM {typeName}");
+                result_count = db.ExecuteScalar<int>($"SELECT COUNT(*) FROM {typeName} {where.ToString()}");
             })) return null;
 
             total_items = result_count;
             return new List<CommonInfo>(result);
         }
 
-        public virtual CommonInfo Get(int id)
+        public virtual CommonInfo Get(UserItem userItem, int id)
         {
             CommonInfo result = null;
 
@@ -202,12 +175,32 @@ namespace Api2
             return result;
         }
 
-        public virtual Dictionary<string, List<CommonInfo>> Dependence(List<CommonInfo> origin)
+        public virtual Dictionary<string, List<CommonInfo>> Dependence(UserItem userItem, List<CommonInfo> origin)
         {
             return null;
         }
 
+        #region Protection method(s)
+
+        public virtual bool UpdateItem(UserItem userItem, T newValue, T oldValue)
+        {
+            return true;
+        }
+
+        public virtual bool InsertItem(UserItem userItem, T newValue)
+        {
+            return true;
+        }
+
+        public virtual bool DeleteItem(UserItem userItem, T newValue)
+        {
+            return true;
+        }
+
+        #endregion
+
         #region Private method(s)
+
 
         #region Compare Methods
 

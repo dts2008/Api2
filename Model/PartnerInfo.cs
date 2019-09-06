@@ -24,5 +24,7 @@ namespace Api2
         public int clientType { get; set; }
 
         public int currency { get; set; }
+
+        public long nextContact { get; set; }
     }
 }

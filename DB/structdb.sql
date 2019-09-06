@@ -28,6 +28,7 @@ CREATE TABLE partnerinfo
     description varchar(4096),
     clientType int,
 	currency int,
+	nextContact bigint,
 	PRIMARY KEY (`id`)
  );
  
@@ -52,7 +53,18 @@ CREATE TABLE partnerfileinfo
     name varchar(256),
     size bigint,
     added bigint,
-	partnerId int,
+	partnerid int,
 	fileToken varchar(128),
+	PRIMARY KEY (`id`)
+);
+
+CREATE TABLE eventinfo
+(
+	id int NOT NULL AUTO_INCREMENT,
+	partnerid int,
+    contactid int,
+	contactType int,
+    eventtime bigint,
+	description varchar(4096),
 	PRIMARY KEY (`id`)
 );

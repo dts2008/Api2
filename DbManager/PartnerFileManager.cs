@@ -59,7 +59,7 @@ namespace Api2
             //}
         }
 
-        public override bool UpdateItem(PartnerFileInfo newValue, PartnerFileInfo oldValue)
+        public override bool UpdateItem(UserItem userItem, PartnerFileInfo newValue, PartnerFileInfo oldValue)
         {
             if (newValue.name == oldValue.name)
             {
@@ -70,19 +70,19 @@ namespace Api2
                 newValue.fileToken = oldValue.fileToken;
             }
 
-            newValue.partnerId = oldValue.partnerId;
+            newValue.partnerid = oldValue.partnerid;
             // check rigt
             return true;
         }
 
-        public override async Task<int> Upload(string fileName, Stream stream, string item)
+        public override async Task<int> Upload(UserItem userItem, string fileName, Stream stream, string item)
         {
             try
             {
                 var pfInfo = new PartnerFileInfo();
                 var info = Tools.Deserialize<PartnerFileInfo>(item);
 
-                if (info.partnerId == 0)
+                if (info.partnerid == 0)
                     return 0;
 
                 pfInfo.fileToken = Guid.NewGuid().ToString("N") + Path.GetExtension(fileName);
@@ -97,24 +97,24 @@ namespace Api2
                 pfInfo.added = ((DateTimeOffset)DateTime.UtcNow).ToUnixTimeSeconds();
                 pfInfo.name = fileName;
                 pfInfo.size = new FileInfo(path).Length;
-                pfInfo.partnerId = info.partnerId;
+                pfInfo.partnerid = info.partnerid;
                 pfInfo.description = info.description;
                 int id = 0;
 
                 if (info.id != 0)
                 {
-                    var pfi = Get(info.id) as PartnerFileInfo;
-                    if (pfi == null) Update(Tools.ToJson(pfInfo), out id);
+                    var pfi = Get(userItem, info.id) as PartnerFileInfo;
+                    if (pfi == null) Update(userItem, Tools.ToJson(pfInfo), out id);
                     else
                     {
                         pfInfo.id = info.id;
                         File.Delete(Path.Combine(resourcePath, pfi.fileToken));
-                        Update(Tools.ToJson(pfInfo), out id);
+                        Update(userItem, Tools.ToJson(pfInfo), out id);
                     }
                 }
                 else
                 {
-                    Update(Tools.ToJson(pfInfo), out id);
+                    Update(userItem, Tools.ToJson(pfInfo), out id);
                 }
 
                 return id;
@@ -127,9 +127,9 @@ namespace Api2
             return 0;
         }
 
-        public override string Download(int id)
+        public override string Download(UserItem userItem, int id)
         {
-            var file = Get(id) as PartnerFileInfo;// commonItems.FindIndex(k => k.id == id);
+            var file = Get(userItem, id) as PartnerFileInfo;// commonItems.FindIndex(k => k.id == id);
             if (file == null) return string.Empty;
 
             return Path.Combine(resourcePath, file.fileToken);

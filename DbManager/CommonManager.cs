@@ -38,11 +38,6 @@ namespace Api2
             Init();
         }
 
-        public virtual Type ItemType()
-        {
-            return typeof(T);
-        }
-
         public virtual void Init()
         {
             //for (int i = 0; i < 30; ++i)
@@ -61,7 +56,7 @@ namespace Api2
             //}
         }
 
-        public virtual bool Delete(int id)
+        public virtual bool Delete(UserItem userItem, int id)
         {
             int index = commonItems.FindIndex(i => i.id == id);
 
@@ -72,7 +67,7 @@ namespace Api2
             return true;
         }
 
-        public bool Update(string data, out int id)
+        public virtual bool Update(UserItem userItem, string data, out int id)
         {
             var item = Tools.Deserialize<T>(data);
             id = 0;
@@ -102,19 +97,19 @@ namespace Api2
             return true;
         }
 
-        public virtual async Task<int> Upload(string fileName, Stream stream, string item)
+        public virtual async Task<int> Upload(UserItem userItem, string fileName, Stream stream, string item)
         {
             await Task<int>.CompletedTask;
 
             return 0;
         }
 
-        public virtual string Download(int id)
+        public virtual string Download(UserItem userItem, int id)
         {
             return string.Empty;
         }
 
-        public List<CommonInfo> Get(int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList)
+        public List<CommonInfo> Get(UserItem userItem, int page, int pageSize, out int total_items, string sort_by, bool descending, List<FilterItem> filterList)
         {
             List<FilterItem> filters = null;// new List<FilterItem>();
 
@@ -174,7 +169,7 @@ namespace Api2
             return result;
         }
 
-        public virtual CommonInfo Get(int id)
+        public virtual CommonInfo Get(UserItem userItem, int id)
         {
             return commonItems.Find(i => i.id == id);
         }
@@ -192,7 +187,7 @@ namespace Api2
             return commonItems.Find(k => func(FilterType.Equal, value, typeField.GetValue(k)));
         }
 
-        public virtual Dictionary<string, List<CommonInfo>> Dependence(List<CommonInfo> origin)
+        public virtual Dictionary<string, List<CommonInfo>> Dependence(UserItem userItem, List<CommonInfo> origin)
         {
             return null;
         }

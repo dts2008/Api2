@@ -13,7 +13,7 @@ namespace Api2
         {
         }
 
-        public override bool UpdateItem(UserInfo newValue, UserInfo oldValue)
+        public override bool UpdateItem(UserItem userItem, UserInfo newValue, UserInfo oldValue)
         {
             if (string.IsNullOrEmpty(newValue.password)) newValue.password = oldValue.password;
 

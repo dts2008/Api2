@@ -25,7 +25,7 @@ namespace Api2
             managers["partnerinfo"] = new PartnerManager();
             managers["contactinfo"] = new ContactManager();
             managers["partnerfileinfo"] = new PartnerFileManager();
-            
+            managers["eventinfo"] = new EventManager();
         }
 
         public bool Get(string type, out IManager manager)

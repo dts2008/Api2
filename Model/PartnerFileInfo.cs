@@ -17,7 +17,7 @@ namespace Api2
 
         public long added { get; set; }
 
-        public int partnerId { get; set; }
+        public int partnerid { get; set; }
 
         public string fileToken { get; set; }
     }
